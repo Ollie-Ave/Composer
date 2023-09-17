@@ -3,13 +3,10 @@
     using ProjectComposeManager.Services.Interfaces;
     using ProjectComposeManager.Services.Models;
     using System;
-    using System.Linq;
     using System.Text;
 
     public class ComposeFileBuilderService : IComposeFileBuilderService
     {
-        const string tabChar = "  ";
-
         public string BuildYaml(ComposeModel composeModel)
         {
             StringBuilder stringBuilder = new();
@@ -58,39 +55,40 @@
 
         private StringBuilder BuildVolume(ComposeVolumeModel composeVolumeModel, StringBuilder stringBuilder, int baseIndentationLevel)
         {
-            string baseIndentation = string.Concat(Enumerable.Repeat(tabChar, baseIndentationLevel));
-
-            stringBuilder.AppendLine($"{baseIndentation}{composeVolumeModel.Name}:");
+            stringBuilder.AppendLineWithIndentation(baseIndentationLevel, $"{composeVolumeModel.Name}:");
+            
+            int indentationLevel = baseIndentationLevel + 1;
+            int secondIndentationLevel = baseIndentationLevel + 2;
 
             if (!string.IsNullOrWhiteSpace(composeVolumeModel.CustomName))
             {
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}name: {composeVolumeModel.CustomName}");
+                stringBuilder.AppendLineWithIndentation(indentationLevel, $"name: {composeVolumeModel.CustomName}");
             }
 
-            stringBuilder.AppendLine($"{baseIndentation}{tabChar}labels:");
+            stringBuilder.AppendLineWithIndentation(indentationLevel, $"labels:");
 
             foreach((string key, string value) in composeVolumeModel.Labels)
             {
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}{tabChar}{key}: {value}");
+                stringBuilder.AppendLineWithIndentation(secondIndentationLevel, $"{key}: {value}");
             }
 
             if (composeVolumeModel.DriverOptions?.Count > 0)
             {
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}driver_opts:");
+                stringBuilder.AppendLineWithIndentation(indentationLevel, "driver_opts:");
                 
                 foreach ((string key, string value) in composeVolumeModel.DriverOptions)
                 {
-                    stringBuilder.AppendLine($"{baseIndentation}{tabChar}{tabChar}{key}: {value}");
+                    stringBuilder.AppendLineWithIndentation(secondIndentationLevel, $"{key}: {value}");
                 }
             }
             else if (!string.IsNullOrWhiteSpace(composeVolumeModel.Driver))
             {
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}driver: {composeVolumeModel.Driver}");
+                stringBuilder.AppendLineWithIndentation(indentationLevel, $"driver: {composeVolumeModel.Driver}");
             }
 
             if (!string.IsNullOrWhiteSpace(composeVolumeModel.External.ToString()))
             {
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}external: {composeVolumeModel.External.ToString().ToLowerInvariant()}");
+                stringBuilder.AppendLineWithIndentation(indentationLevel, $"external: {composeVolumeModel.External}");
             }
 
             return stringBuilder;
@@ -98,19 +96,20 @@
 
         private StringBuilder BuildService(ComposeServiceModel composeServiceModel, StringBuilder stringBuilder, int baseIndentationLevel)
         {
-            string baseIndentation = string.Concat(Enumerable.Repeat(tabChar, baseIndentationLevel));
+            int indentationLevel = baseIndentationLevel + 1;
+            int secondIndentationLevel = baseIndentationLevel + 2;
 
-            stringBuilder.AppendLine($"{baseIndentation}{composeServiceModel.Name}:");
+            stringBuilder.AppendLineWithIndentation(baseIndentationLevel, $"{composeServiceModel.Name}:");
 
             if (!string.IsNullOrWhiteSpace(composeServiceModel.Image))
             {
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}image: {composeServiceModel.Image}");
+                stringBuilder.AppendLineWithIndentation(indentationLevel, $"image: {composeServiceModel.Image}");
             }
             else if (composeServiceModel.Build is not null)
             {
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}build:");
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}{tabChar}context: {composeServiceModel.Build.Context}");
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}{tabChar}dockerfile: {composeServiceModel.Build.DockerFile}");
+                stringBuilder.AppendLineWithIndentation(indentationLevel, $"build:");
+                stringBuilder.AppendLineWithIndentation(secondIndentationLevel, $"context: {composeServiceModel.Build.Context}");
+                stringBuilder.AppendLineWithIndentation(secondIndentationLevel, $"dockerfile: {composeServiceModel.Build.DockerFile}");
             }
             else
             {
@@ -119,52 +118,52 @@
 
             if (composeServiceModel.PortBindings.Count > 0)
             {
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}ports:");
+                stringBuilder.AppendLineWithIndentation(indentationLevel, "ports:");
                 
                 foreach((string exposedPort, string internalPort) in composeServiceModel.PortBindings)
                 {
-                    stringBuilder.AppendLine($"{baseIndentation}{tabChar}{tabChar}- {exposedPort}:{internalPort}");
+                    stringBuilder.AppendLineWithIndentation(secondIndentationLevel, $"- {exposedPort}:{internalPort}");
                 }
             }
 
             if (composeServiceModel.EnvironmentVariables.Count > 0)
             {
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}environment:");
+                stringBuilder.AppendLineWithIndentation(indentationLevel, "environment:");
 
                 foreach((string key, string value) in composeServiceModel.EnvironmentVariables)
                 {
-                    stringBuilder.AppendLine($"{baseIndentation}{tabChar}{tabChar}{key}: {value}");
+                    stringBuilder.AppendLineWithIndentation(secondIndentationLevel, $"{key}: {value}");
                 }
             }
 
             if (!string.IsNullOrWhiteSpace(composeServiceModel.HostName))
             {
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}hostname: {composeServiceModel.HostName}");
+                stringBuilder.AppendLineWithIndentation(indentationLevel, $"hostname: {composeServiceModel.HostName}");
             }
 
             if (composeServiceModel.Labels.Count > 0)
             {
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}labels:");
+                stringBuilder.AppendLineWithIndentation(indentationLevel, "labels:");
 
                 foreach((string key, string value) in composeServiceModel.Labels)
                 {
-                    stringBuilder.AppendLine($"{baseIndentation}{tabChar}{tabChar}{key}: {value}");
+                    stringBuilder.AppendLineWithIndentation(secondIndentationLevel, $"{key}: {value}");
                 }
             }
 
             if (composeServiceModel.Volumes.Length > 0)
             {
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}volumes:");
+                stringBuilder.AppendLineWithIndentation(indentationLevel, "volumes:");
 
                 foreach(string volume in composeServiceModel.Volumes)
                 {
-                    stringBuilder.AppendLine($"{baseIndentation}{tabChar}{tabChar}- {volume}");
+                    stringBuilder.AppendLineWithIndentation(secondIndentationLevel, $"- {volume}");
                 }
             }
 
             if (!string.IsNullOrWhiteSpace(composeServiceModel.Restart))
             {
-                stringBuilder.AppendLine($"{baseIndentation}{tabChar}restart: {composeServiceModel.Restart}");
+                stringBuilder.AppendLineWithIndentation(indentationLevel, $"restart: {composeServiceModel.Restart}");
             }
 
             return stringBuilder;
